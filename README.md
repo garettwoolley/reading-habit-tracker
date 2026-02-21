@@ -126,7 +126,13 @@ psql -U postgres -d reading_habit_tracker -f db/seed.sql
 
 ### 5. Configure Environment Variables
 
-Create `backend/.env` file:
+Copy the example environment file and fill in your credentials:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Then edit `backend/.env`:
 
 ```env
 DATABASE_URL=postgresql://your_username:your_password@localhost:5432/reading_habit_tracker
@@ -165,66 +171,56 @@ npm run dev
 
 ## Verifying the Vertical Slice
 
-**Current Status:** The app works as a prototype using localStorage. The backend API exists but is not connected to the frontend yet.
+**Current Status:** The frontend is connected to the backend API. The "Save Log" button saves reading logs to PostgreSQL and loads them from the database on page load.
 
-### Steps to Verify (After Connecting Frontend to Backend)
+### Steps to Verify
 
 1. Start the application: `npm run dev`
 2. Navigate to Log Reading page
 3. Fill out the form (book title, minutes, pages, date)
 4. Click "Save Log" button
-5. **Verify Database:** Check database contains the new record:
+5. **Verify Database:** Check the database contains the new record:
    ```bash
    psql -U postgres -d reading_habit_tracker
    SELECT * FROM reading_logs ORDER BY created_at DESC LIMIT 1;
    ```
-6. **Verify Persistence:** Refresh the page - data should still be visible
-7. **Verify UI Update:** The new reading log should appear in the UI
+6. **Verify Persistence:** Refresh the page - data should still be visible (loaded from database)
+7. **Verify UI Update:** The new reading log should appear in the UI immediately after saving
 
-## What Still Needs to Be Done
-
-### ⚠️ Required for Assignment: "One Working Button"
+## Assignment: "One Working Button" - COMPLETE
 
 **Assignment Requirement:** Pick one existing button and make it:
 1. Connect to backend server logic
 2. Update something in the database
-3. Return the updated value to the backend
+3. Return the updated value to the frontend
 4. Show the updated value in the UI
 
 **Selected Button:** "Save Log" button on the Log Reading page
 
-**What needs to happen:**
+**What was implemented:**
 
-1. **Connect Frontend to Backend API**
-   - File to edit: `frontend/src/context/AppContext.jsx`
-   - Replace `localStorage.getItem('readingLogs')` with API call to `GET /api/reading-logs`
-   - Replace `localStorage.setItem('readingLogs', ...)` with API call to `POST /api/reading-logs`
-   - Use `axios` to make the HTTP requests
+- `frontend/src/context/AppContext.jsx` — replaced localStorage with Axios API calls:
+  - On mount: `GET /api/reading-logs` fetches all logs from the database
+  - On save: `POST /api/reading-logs` sends the new log to the backend
+- `frontend/src/pages/LogReading.jsx` — `handleSubmit` now awaits the API call before navigating
+- `backend/.env.example` — added as a template for the required environment variables (the actual `backend/.env` is gitignored and must be created locally)
 
-2. **Verify All Requirements Are Met**
-   - ✅ Connect to backend: Frontend calls `POST /api/reading-logs`
-   - ✅ Update database: Backend inserts into `reading_logs` table
-   - ✅ Return updated value: Backend returns the created log as JSON
-   - ✅ Show in UI: Frontend displays the new reading log
+**All requirements met:**
+- ✅ Connect to backend: Frontend calls `POST /api/reading-logs`
+- ✅ Update database: Backend inserts into `reading_logs` table
+- ✅ Return updated value: Backend returns the created log as JSON
+- ✅ Show in UI: Frontend maps the response and updates React state
 
-3. **Test the Full Flow**
-   - Click "Save Log" button
-   - Verify data appears in database: `SELECT * FROM reading_logs ORDER BY created_at DESC LIMIT 1;`
-   - Refresh page and verify data persists (proves it's in database, not just browser)
-   - Verify UI shows the new reading log
-
-### Current State
+## Current State
 
 ✅ **Done:**
 - Database schema (7 tables) in `db/schema.sql`
 - Seed data in `db/seed.sql`
 - Backend API code (Express routes and controllers)
-- Frontend React app (works with localStorage)
-
-❌ **Not Done:**
-- Frontend doesn't call backend API yet
-- "Save Log" button saves to localStorage, not database
-- Data doesn't persist from database after refresh
+- Frontend connected to backend via Axios
+- "Save Log" button saves to PostgreSQL database
+- Data persists across page refreshes (loaded from database, not localStorage)
+- `backend/.env.example` provided as setup template
 
 ## Project Structure
 
@@ -233,13 +229,14 @@ reading-habit-tracker/
 ├── frontend/          # React frontend
 │   ├── src/
 │   │   ├── components/
-│   │   ├── context/   # AppContext.jsx (needs updating)
+│   │   ├── context/   # AppContext.jsx - uses Axios API calls
 │   │   └── pages/
 │   └── package.json
 ├── backend/           # Express backend
 │   ├── routes/        # API endpoints
 │   ├── controllers/   # Request handlers
 │   ├── db/            # Database connection
+│   ├── .env.example   # Environment variable template
 │   └── server.js
 ├── db/                # SQL scripts
 │   ├── schema.sql     # Creates tables

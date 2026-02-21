@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import axios from 'axios'
 
 const AppContext = createContext()
 
@@ -91,11 +92,25 @@ export const MOCK_FRIENDS = [
   },
 ]
 
+// Map a database row (snake_case) to the frontend log format (camelCase)
+const mapLog = (row) => ({
+  id: row.id,
+  bookTitle: row.book_title,
+  minutes: row.minutes_read,
+  pages: row.pages_read,
+  date: row.date,
+  finished: row.finished,
+})
+
 export const AppProvider = ({ children }) => {
-  const [readingLogs, setReadingLogs] = useState(() => {
-    const saved = localStorage.getItem('readingLogs')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [readingLogs, setReadingLogs] = useState([])
+
+  // Fetch reading logs from the backend API on mount
+  useEffect(() => {
+    axios.get('/api/reading-logs')
+      .then(res => setReadingLogs(res.data.map(mapLog)))
+      .catch(err => console.error('Failed to fetch reading logs:', err))
+  }, [])
 
   const [avatar, setAvatar] = useState(() => {
     const saved = localStorage.getItem('avatar')
@@ -156,29 +171,28 @@ export const AppProvider = ({ children }) => {
       })()
     : null
 
-  const addReadingLog = (log) => {
-    const newLog = {
-      ...log,
-      id: Date.now(),
-      date: log.date || new Date().toISOString().split('T')[0],
-    }
-    const updatedLogs = [...readingLogs, newLog]
-    setReadingLogs(updatedLogs)
-    localStorage.setItem('readingLogs', JSON.stringify(updatedLogs))
+  const addReadingLog = async (log) => {
+    const res = await axios.post('/api/reading-logs', log)
+    const newLog = mapLog(res.data)
+    setReadingLogs(prev => {
+      const updatedLogs = [...prev, newLog]
 
-    // Update streak (simple logic: if logged today, increment if yesterday was logged)
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
-    const loggedToday = updatedLogs.some(l => l.date === today)
-    const loggedYesterday = updatedLogs.some(l => l.date === yesterday)
-    
-    if (loggedToday && loggedYesterday) {
-      setCurrentStreak(prev => {
-        const newStreak = prev + 1
-        localStorage.setItem('currentStreak', newStreak.toString())
-        return newStreak
-      })
-    }
+      // Update streak: if logged today and yesterday, increment
+      const today = new Date().toISOString().split('T')[0]
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+      const loggedToday = updatedLogs.some(l => l.date === today)
+      const loggedYesterday = updatedLogs.some(l => l.date === yesterday)
+
+      if (loggedToday && loggedYesterday) {
+        setCurrentStreak(prev => {
+          const newStreak = prev + 1
+          localStorage.setItem('currentStreak', newStreak.toString())
+          return newStreak
+        })
+      }
+
+      return updatedLogs
+    })
   }
 
   const updateAvatar = (updates) => {

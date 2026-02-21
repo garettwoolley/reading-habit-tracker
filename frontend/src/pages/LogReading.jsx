@@ -26,15 +26,15 @@ const LogReading = () => {
     setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!formData.minutes && !formData.pages) {
       setError('Please enter at least minutes read or pages read')
       return
     }
 
-    addReadingLog({
+    await addReadingLog({
       bookTitle: formData.bookTitle || 'Untitled Book',
       minutes: parseInt(formData.minutes) || 0,
       pages: parseInt(formData.pages) || 0,
