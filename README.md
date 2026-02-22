@@ -126,20 +126,24 @@ psql -U postgres -d reading_habit_tracker -f db/seed.sql
 
 ### 5. Configure Environment Variables
 
-Copy the example environment file and fill in your credentials:
+Create `backend/.env` file:
 
 ```bash
-cp backend/.env.example backend/.env
+cd backend
 ```
 
-Then edit `backend/.env`:
+Create a new file named `.env` (no extension) with:
 
 ```env
-DATABASE_URL=postgresql://your_username:your_password@localhost:5432/reading_habit_tracker
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/reading_habit_tracker
 PORT=3001
 ```
 
-Replace `your_username` and `your_password` with your PostgreSQL credentials.
+**Important:**
+- Username should be `postgres` (as admin)
+- Replace `your_password` with your PostgreSQL password
+- If you don't have a password, use: `DATABASE_URL=postgresql://postgres@localhost:5432/reading_habit_tracker`
+- The file must be named exactly `.env` (not `.env.txt` or anything else)
 
 ## Running the Application
 
