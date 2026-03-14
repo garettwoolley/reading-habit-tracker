@@ -8,10 +8,14 @@
     "dev:backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build:frontend": "cd frontend && npm run build",
-    "start:backend": "cd backend && npm start"
+    "start:backend": "cd backend && npm start",
+    "db:migrate": "dotenv -- bash -c 'psql \"$DATABASE_URL\" -f db/migrations/001_initial_schema.sql && psql \"$DATABASE_URL\" -f db/migrations/002_seed_data.sql'",
+    "db:seed": "dotenv -- bash -c 'psql \"$DATABASE_URL\" -f db/migrations/002_seed_data.sql'",
+    "db:reset": "dotenv -- bash -c 'psql \"$DATABASE_URL\" -f db/schema.sql && psql \"$DATABASE_URL\" -f db/seed.sql'"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "dotenv-cli": "^11.0.0"
   },
   "keywords": [
     "reading",
