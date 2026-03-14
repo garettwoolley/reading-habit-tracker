@@ -99,51 +99,57 @@ npm run install:all
 
 This installs dependencies for root, frontend, and backend.
 
-### 3. Create Database
+### 3. Configure Environment Variables
 
-```bash
-# Connect to PostgreSQL
-psql -U postgres
-
-# Create database
-CREATE DATABASE reading_habit_tracker;
-
-# Exit
-\q
-```
-
-### 4. Run Database Scripts
-
-```bash
-# Create tables
-psql -U postgres -d reading_habit_tracker -f db/schema.sql
-
-# Add sample data
-psql -U postgres -d reading_habit_tracker -f db/seed.sql
-```
-
-**Note:** Replace `postgres` with your PostgreSQL username if different.
-
-### 5. Configure Environment Variables
-
-Create `backend/.env` file:
-
-```bash
-cd backend
-```
-
-Create a new file named `.env` (no extension) with:
+Create a `.env` file in the **project root** (not inside `backend/`):
 
 ```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/reading_habit_tracker
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/reading_habit_tracker
 PORT=3001
 ```
 
 **Important:**
-- Username should be `postgres` (as admin)
-- Replace `your_password` with your PostgreSQL password
-- If you don't have a password, use: `DATABASE_URL=postgresql://postgres@localhost:5432/reading_habit_tracker`
-- The file must be named exactly `.env` (not `.env.txt` or anything else)
+- Replace `postgres:postgres` with your PostgreSQL username and password
+- If you have no password, use: `DATABASE_URL=postgresql://postgres@localhost:5432/reading_habit_tracker`
+- The file must be named exactly `.env` — it is gitignored and will not be committed
+- You can also reference `backend/.env.example` for the expected variables
+
+### 4. Create Database
+
+```bash
+psql -U postgres -c "CREATE DATABASE reading_habit_tracker;"
+```
+
+Replace `postgres` with your PostgreSQL username if different.
+
+### 5. Run Migrations
+
+```bash
+# Apply schema + seed data
+npm run db:migrate
+```
+
+Or run each step individually:
+
+```bash
+# Schema only (tables and indexes)
+npm run db:migrate
+
+# Seed data only
+npm run db:seed
+
+# Full reset (drops all tables, recreates, and seeds)
+npm run db:reset
+```
+
+The migration files live in `db/migrations/` and are safe to re-run (they use
+`IF NOT EXISTS` and `ON CONFLICT` guards).
+
+| Script | What it does |
+|--------|-------------|
+| `npm run db:migrate` | Runs all migrations (schema + seed) |
+| `npm run db:seed` | Inserts seed data only |
+| `npm run db:reset` | Drops everything via `schema.sql`, then re-seeds |
 
 ## Running the Application
 
@@ -230,6 +236,7 @@ npm run dev
 
 ```
 reading-habit-tracker/
+├── .env               # Local env config (gitignored)
 ├── frontend/          # React frontend
 │   ├── src/
 │   │   ├── components/
@@ -243,8 +250,12 @@ reading-habit-tracker/
 │   ├── .env.example   # Environment variable template
 │   └── server.js
 ├── db/                # SQL scripts
-│   ├── schema.sql     # Creates tables
-│   └── seed.sql       # Sample data
+│   ├── schema.sql     # Full DDL (drop + create, for resets)
+│   ├── seed.sql       # Sample data
+│   └── migrations/    # Incremental migration files
+│       ├── 001_initial_schema.sql
+│       └── 002_seed_data.sql
+├── claude.md          # AI assistant project context
 └── README.md
 ```
 
